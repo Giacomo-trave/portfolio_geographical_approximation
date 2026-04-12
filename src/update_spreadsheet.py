@@ -8,7 +8,7 @@ def authenticate_google_sheets():
     # authentication to google APIs
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     credentials_json = json.loads(os.environ['GOOGLE_CREDENTIALS'])
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json['private_key_id'], scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json, scope)
     client = gspread.authorize(credentials)
     spreadsheet = client.open("SWDA-XMME_periodic_rebalancing")
     return spreadsheet
