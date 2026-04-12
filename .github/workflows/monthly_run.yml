@@ -6,6 +6,9 @@ on:
     - cron: '0 0 17 * *'
   workflow_dispatch: # Permette di avviarlo manualmente per test
 
+env:
+  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }} 
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,6 +20,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
 
     - name: Set up Python
       uses: actions/setup-python@v5

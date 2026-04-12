@@ -2,11 +2,13 @@ import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import datetime
+import json
 
 def authenticate_google_sheets():
     # authentication to google APIs
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credentials = ServiceAccountCredentials.from_json_keyfile_name("D:\giaco\Documents\project\sheet_edit_bot\my-project-giacomot-5913080db8bc.json", scope)
+    credentials_json = json.loads(os.environ['GOOGLE_CREDENTIALS'])
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json['private_key_id'], scope)
     client = gspread.authorize(credentials)
     spreadsheet = client.open("SWDA-XMME_periodic_rebalancing")
     return spreadsheet

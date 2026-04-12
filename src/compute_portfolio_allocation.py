@@ -49,7 +49,7 @@ def main():
     xmme_countries = XMME_alloc_geo.sort_index().index.tolist()
 
     #get portfolio geographical info for VWCE
-    VWCE_alloc_geo = pd.read_excel(r'portfolio_allocations\VWCE_allocation.xlsx', header = 0)
+    VWCE_alloc_geo = pd.read_excel(r'portfolio_allocations/VWCE_allocation.xlsx', header = 0)
     VWCE_alloc_geo = VWCE_alloc_geo.rename(columns={'fundMktPercent': 'Weight'})
     VWCE_alloc_geo = VWCE_alloc_geo.reset_index().set_index('countryName')['Weight']
     vwce_countries = VWCE_alloc_geo.sort_index().index.to_list()
