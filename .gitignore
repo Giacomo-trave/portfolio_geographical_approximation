@@ -1,0 +1,35 @@
+# Ambiente Virtuale
+.venv/
+venv/
+env/
+bin/
+lib/
+include/
+pyvenv.cfg
+
+# Python (File compilati e temporanei)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Notebooks
+.ipynb_checkpoints
+
+# IDE e Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# File di sistema
+.DS_Store
+Thumbs.db
+
+# File di configurazione sensibili (opzionale ma consigliato)
+.env
+
+#data
+.xls
