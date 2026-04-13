@@ -1,31 +1,85 @@
-# Introduction
-The code in this repository server as a simple tool to periodically compute a portfolio that approximates Vanguard's VWCE etf using ishares' SWDA etf and Xtrackers' XMME etf.
+# VWCE Approximation
+
+## Introduction
+
+The code in this repository serves as a simple tool to periodically compute a portfolio that approximates Vanguard's VWCE ETF using iShares' SWDA ETF and Xtrackers' XMME ETF.
 
 The main reasons behind this exercise are mainly two:
 
-    1. since I recently began eanring a salary, I wanted to periodically invest some of it in the VWCE fund, however my broker charges a small commission when purchasing this title, whilst some other titles (including SWDA and XMME) are free of charge. The commission charged is small, however, I took the opportunity to carry out this small project.
+1. Since I recently began earning a salary, I wanted to periodically invest some of it in the VWCE fund. However, my broker charges a small commission when purchasing this title, whilst some other titles (including SWDA and XMME) are free of charge. The commission charged is small, however I took the opportunity to carry out this small project.
 
-    2. I am trying to improve some skills about my interests, including programming, data analysis and understanding of the financial markets. Consequently, this small project allowed me to tackle all these topics learning small interesting things (e.g. i never had to interact with GitHub's actions for cloud batch deployment neither had I had the need to understand how to connect to Google cloud's API services).
+2. I am trying to improve some skills about my interests, including programming, data analysis and understanding of the financial markets. Consequently, this small project allowed me to tackle all these topics learning small interesting things (e.g. I had never had to interact with GitHub Actions for cloud batch deployment, nor had I had the need to understand how to connect to Google Cloud's API services).
 
 Moreover, I was happy to solve this problem with an optimization algorithm, which reminds me of my student career as a mathematician!
-A small viable development of this small project is to add some notebooks with some backlog tests of the obtained portfolio, so as to learn something about financial quantitative analysis and risk analysis applied to something that interests me in first person: my own savings!
 
-In the following you can find a description of the structure of the repo, an explanation of its modules and a brief mathematical formulation of the optimization problem this whole project can be reduced to.
+A small viable development of this project is to add some notebooks with backtest analysis of the obtained portfolio, so as to learn something about financial quantitative analysis and risk analysis applied to something that interests me in first person: my own savings!
 
-## File structure
+---
 
-## VWCE approximation as a linear programming problem
-Let $\alpha, \beta$ be the vectors of allocation of the SWDA and of the XMME etfs, and let $\gamma$ be the vector of allocation of the VWCE etf. Here we interpret the geographical allocations of the three funds as $d$-dimensional vectors, where $d$ is the common support of the three funds (e.g. the union of the geographical countries that compose the three titles).
-We want to minimize the following function
+## File Structure
+
+```
+VWCE_approximation/
+│
+├── .github/
+│   └── workflows/
+│       └── monthly_run.yml          # GitHub Actions workflow: runs the pipeline monthly
+│
+├── notebooks/
+│   └── SWDA_balancing.ipynb         # Jupyter notebook for exploratory analysis
+│
+├── portfolio_allocations/           # Downloaded and computed allocation files (auto-updated)
+│   ├── SWDA_allocation.xls          # Raw SWDA holdings downloaded from iShares
+│   ├── SWDA_allocation.csv          # SWDA holdings converted to CSV
+│   ├── XMME_allocation.xlsx         # Raw XMME holdings downloaded from DWS
+│   ├── VWCE_allocation.xlsx         # VWCE market allocation fetched from Vanguard API
+│   └── VWCE_market_allocation.xlsx  # (legacy) previous version of VWCE allocation
+│
+├── src/
+│   ├── compute_portfolio_allocation.py  # Main entry point: orchestrates the full pipeline
+│   ├── download_data.py                 # Downloads latest ETF allocation data from provider websites
+│   ├── optimization_utils.py            # Scipy-based optimizer to find optimal SWDA/XMME weights
+│   ├── swda_xls_to_csv.py               # Converts the SWDA .xls file to a clean .csv
+│   └── update_spreadsheet.py            # Authenticates with Google Sheets and writes results
+│
+├── requirements.txt                 # Python dependencies
+└── README.md                        # This file
+```
+
+### Module descriptions
+
+- **`compute_portfolio_allocation.py`** — Main script. Calls all other modules in sequence: downloads fresh data, converts formats, runs the optimization, and updates the Google Sheet.
+- **`download_data.py`** — Downloads the latest holdings data for SWDA (iShares), XMME (DWS/Xtrackers) and VWCE (Vanguard GraphQL API) and saves them under `portfolio_allocations/`.
+- **`swda_xls_to_csv.py`** — Converts the SWDA `.xls` file (which has a non-standard format) into a clean CSV suitable for pandas.
+- **`optimization_utils.py`** — Implements the SLSQP optimizer that finds the weights $(x, y)$ minimizing the distance between the blended SWDA+XMME portfolio and VWCE.
+- **`update_spreadsheet.py`** — Connects to the Google Sheets API using a service account (credentials stored as a GitHub Secret) and writes the optimal weights, country allocations, and a timestamp.
+
+---
+
+## Automation
+
+The script runs automatically on the **17th of every month at midnight UTC** via GitHub Actions (`.github/workflows/monthly_run.yml`). It can also be triggered manually from the Actions tab using the `workflow_dispatch` event.
+
+After each run, the updated allocation files are committed and pushed back to the repository automatically.
+
+### Required setup
+
+To run this project (locally or via GitHub Actions) you need a Google service account with access to the target Google Sheet. The credentials JSON must be stored as a GitHub repository secret named `GOOGLE_CREDENTIALS`.
+
+---
+
+## VWCE Approximation as a Linear Programming Problem
+
+Let $\alpha$, $\beta$ be the vectors of geographical allocation of the SWDA and XMME ETFs respectively, and let $\gamma$ be the allocation vector of the VWCE ETF. We interpret these as $d$-dimensional vectors, where $d$ is the size of the union of all countries covered by the three funds.
+
+We want to minimize the following function:
 
 $$
-f\colon \mathbb R^2 \to \mathbb R\\
-(x,y)\mapsto ||(\alpha, \beta)\cdot (x,y)^\top - \gamma||^2
+f\colon \mathbb{R}^2 \to \mathbb{R}
 $$
 
-which is convex. This is a simple convex linear programming problem, where the unknown parameters $\alpha, \beta$ must satisfy the linear constraint $\alpha + \beta = 1$. 
-We use a standard optimizator from the library scipy/optimize for this problem.
+$$
+(x, y) \mapsto \|(\alpha, \beta) \cdot (x, y)^\top - \gamma\|^2
+$$
 
-## Batching
-
-The source code inside src is meant to be periodically run (once every month)
+which is convex. This is a standard constrained optimization problem, where the weights $(x, y)$ must satisfy the constraint $x + y = 1$ (full investment). We use `scipy.optimize.minimize` with the SLSQP method to solve it.
