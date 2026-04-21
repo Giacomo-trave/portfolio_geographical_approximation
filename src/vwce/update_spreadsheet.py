@@ -19,12 +19,13 @@ def authenticate_google_sheets():
 
 
 def log_portfolio_weights(optimal_weights, etf_columns):
-    client = _get_gspread_client()
-    log_name = "portfolio_weights_log"
+    spreadsheet = authenticate_google_sheets()
+    log_tab_name = "weights_log"
+
     try:
-        sheet = client.open(log_name).sheet1
-    except gspread.exceptions.SpreadsheetNotFound:
-        sheet = client.create(log_name).sheet1
+        sheet = spreadsheet.worksheet(log_tab_name)
+    except gspread.exceptions.WorksheetNotFound:
+        sheet = spreadsheet.add_worksheet(title=log_tab_name, rows=1000, cols=10)
         sheet.append_row(["Date"] + list(etf_columns))
 
     now = datetime.now(ZoneInfo("Europe/Rome"))
