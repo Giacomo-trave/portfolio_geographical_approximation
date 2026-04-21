@@ -86,18 +86,18 @@ def main():
 
     #There is still eteronimy in the way South Korea and Russia are named in the three datasets
     if "South korea" in XMME_alloc_geo.index:
-        XMME_alloc_geo.rename(index = {'South korea': 'Korea'})
+        XMME_alloc_geo = XMME_alloc_geo.rename(index = {'South korea': 'Korea'})
     if "South Korea" in SWDA_alloc_geo.index:
-        SWDA_alloc_geo.rename(index = {'South Korea': 'Korea'})
+        SWDA_alloc_geo = SWDA_alloc_geo.rename(index = {'South Korea': 'Korea'})
     if "South korea" in VWCE_alloc_geo.index:
-        VWCE_alloc_geo.rename(index = {'South korea': 'Korea'})
+        VWCE_alloc_geo = VWCE_alloc_geo.rename(index = {'South korea': 'Korea'})
 
     if "Russian Federation" in XMME_alloc_geo.index:
-        XMME_alloc_geo.rename(index = {"Russian Federation": 'Russia'})
+        XMME_alloc_geo = XMME_alloc_geo.rename(index = {"Russian Federation": 'Russia'})
     if "Russian Federation" in SWDA_alloc_geo.index:
-        SWDA_alloc_geo.rename(index = {"Russian Federation": 'Russia'})
+        SWDA_alloc_geo = SWDA_alloc_geo.rename(index = {"Russian Federation": 'Russia'})
     if "Russian Federation" in VWCE_alloc_geo.index:
-        VWCE_alloc_geo.rename(index = {"Russian Federation": 'Russia'})
+        VWCE_alloc_geo = VWCE_alloc_geo.rename(index = {"Russian Federation": 'Russia'})
 
     df_etf = pd.DataFrame({
     'SWDA': SWDA_alloc_geo,
