@@ -14,7 +14,7 @@ Moreover, I was happy to solve this problem with an optimization algorithm, whic
 
 A small viable development of this project is to add some notebooks with backtest analysis of the obtained portfolio, so as to learn some analysis metrics of financial instruments applied to something that interests me in first person: my own savings!
 
-This code may be reused in approximating any target portfolio using a set of other instruments (with respect to their geographical allocation) but beware: my use case of approximating VWCE with XMME and SWDA ETFs was motivated by prior knowledge of the market indexes those ETFs try to replicate (they are somehow complementary). This, in general, does not appy to each use case.
+This code may be reused in approximating any target portfolio using a set of other instruments (with respect to their geographical allocation) but beware: my use case of approximating VWCE with XMME and SWDA ETFs was motivated by prior knowledge of the market indexes those ETFs try to replicate (they are somehow complementary). This, in general, does not appy to each use case. Anyone wishing to reuse this code has to integrate it with the web-scraping part of its instrument of interest (and handle the possible parsing).
 
 ---
 

@@ -5,6 +5,9 @@ from zoneinfo import ZoneInfo
 
 from auth.google_credentials import load_google_credentials_dict
 
+SPREADSHEET_NAME = "Situazione patrimoniale"
+PAC_WORKSHEET_NAME = "PAC_allocazione_geografica"
+
 
 def _get_gspread_client():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -14,75 +17,53 @@ def _get_gspread_client():
 
 def authenticate_google_sheets():
     client = _get_gspread_client()
-    spreadsheet = client.open("SWDA-XMME_periodic_rebalancing")
-    return spreadsheet
+    return client.open(SPREADSHEET_NAME)
 
 
-def log_portfolio_weights(optimal_weights, etf_columns):
-    spreadsheet = authenticate_google_sheets()
-    log_tab_name = "weights_log"
+def _get_pac_worksheet():
+    return authenticate_google_sheets().worksheet(PAC_WORKSHEET_NAME)
 
-    try:
-        sheet = spreadsheet.worksheet(log_tab_name)
-    except gspread.exceptions.WorksheetNotFound:
-        sheet = spreadsheet.add_worksheet(title=log_tab_name, rows=1000, cols=10)
-        sheet.append_row(["Date"] + list(etf_columns))
 
-    now = datetime.now(ZoneInfo("Europe/Rome"))
-    current_month = now.strftime("%Y-%m")
+def log_portfolio_weights(optimal_weights):
+    sheet = _get_pac_worksheet()
 
-    existing = sheet.col_values(1)[1:]  # skip header
-    if any(date.startswith(current_month) for date in existing):
-        print(f"Log already updated for {current_month}, skipping.")
-        return
+    col_a = sheet.col_values(1)
+    next_row = max(len(col_a) + 1, 6)
 
-    row = [now.strftime("%Y-%m-%d %H:%M:%S")] + [round(float(w), 6) for w in optimal_weights]
-    sheet.append_row(row)
+    now = datetime.now(ZoneInfo("Europe/Rome")).strftime("%Y-%m-%d %H:%M:%S")
+    row = [now, round(float(optimal_weights[0]), 6), round(float(optimal_weights[1]), 6)]
+
+    sheet.update([row], f'A{next_row}:C{next_row}')
 
 
 def update_spreadsheet_with_allocation(optimal_weights, balanced_portfolio, comparison_df):
     try:
-        sheet = authenticate_google_sheets().sheet1
+        sheet = _get_pac_worksheet()
     except Exception as e:
         print(f"Error authenticating with Google Sheets: {e}")
+        return
 
     try:
-        # Clear old data before writing
-        sheet.batch_clear(["D2:F1000"])
+        # Current weights and last-update timestamp (top of sheet)
+        sheet.update_acell('B2', round(float(optimal_weights[0]), 6))
+        sheet.update_acell('C2', round(float(optimal_weights[1]), 6))
+        timestamp = datetime.now(ZoneInfo("Europe/Rome")).strftime("%Y-%m-%d %H:%M:%S")
+        sheet.update_acell('A2', timestamp)
 
-        # Update optimal weights in the sheet
-        sheet.update_acell('A2', optimal_weights[0])
-        sheet.update_acell('B2', optimal_weights[1])
+        # Geographical allocation table (columns E, F, G)
+        sheet.batch_clear(["E2:G1000"])
 
-        # Update geographical allocations in the sheet
-        comparison_df = comparison_df.sort_values(by = 'VWCE', ascending=False)
+        comparison_df = comparison_df.sort_values(by='VWCE', ascending=False)
         N = comparison_df.shape[0]
 
-        country_list = comparison_df.index.tolist()
-        country_list = [[x] for x in country_list]
+        country_list = [[x] for x in comparison_df.index.tolist()]
+        balanced_portfolio_col = [[x] for x in comparison_df['SWDA+XMME'].values.tolist()]
+        target_portfolio = [[x] for x in comparison_df['VWCE'].values.tolist()]
 
-        balanced_portfolio = comparison_df['SWDA+XMME'].values.tolist()
-        balanced_portfolio = [[x] for x in balanced_portfolio]
+        last_row = N + 1
+        sheet.update(country_list, f'E2:E{last_row}')
+        sheet.update(balanced_portfolio_col, f'F2:F{last_row}')
+        sheet.update(target_portfolio, f'G2:G{last_row}')
 
-        target_portfolio = comparison_df['VWCE'].values.tolist()
-        target_portfolio = [[x] for x in target_portfolio]
-
-
-        cell_interval = 'D2:D' + str(N+3)
-        sheet.update(country_list, cell_interval)
-
-        cell_interval = 'E2:E' + str(N+3)
-        sheet.update(balanced_portfolio, cell_interval)
-
-        cell_interval = 'F2:F' + str(N+3)
-        sheet.update(target_portfolio, cell_interval)
-
-        italy_timezone = datetime.now(ZoneInfo("Europe/Rome"))
-
-        timestamp = italy_timezone.strftime("%Y-%m-%d %H:%M:%S")
-        sheet.update_acell('H2', timestamp)
-        
     except Exception as e:
         print(f"Error updating the spreadsheet: {e}")
-    
-    return

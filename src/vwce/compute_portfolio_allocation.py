@@ -124,7 +124,7 @@ def main():
         print(f"Errore durante l'aggiornamento del foglio di calcolo: {e}")
 
     try:
-        update_spreadsheet.log_portfolio_weights(optimal_weights, etf_cols)
+        update_spreadsheet.log_portfolio_weights(optimal_weights)
     except Exception as e:
         print(f"Errore durante il logging dei pesi: {e}")
    
